@@ -1,0 +1,4 @@
+# This is a docs/templates skill, not a SQL project — don't let the one .sql
+# template skew GitHub's language detection.
+templates/** linguist-documentation
+*.sql linguist-documentation
