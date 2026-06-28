@@ -33,6 +33,15 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[native]` Adding a native-module dep → the installed dev-client binary is stale → red screen `Cannot find native module 'X'` at the top-level import. Fix is `npx expo run:ios` (pods + rebuild), NOT a Metro `--clear`.
 - `[native]` Reanimated/Fabric `EXC_BAD_ACCESS` in `cloneShadowTreeWithNewProps` (`0xdeaddead`) is usually a transient Fast-Refresh-while-animating dev artifact — boot clean before treating it as a real bug.
 
+## Deployment / EAS
+- `[deploy]` Link an EXISTING repo to EAS with `eas init --id <project-id>` — NOT `npx create-expo-app` (Expo's generic onboarding suggests it; it scaffolds a blank app in a subfolder and links the wrong thing).
+- `[deploy]` If `--legacy-peer-deps` is needed locally, EAS Build dies at the install phase in ~20s with no clear reason. Fix: a tracked `.npmrc` with `legacy-peer-deps=true`.
+- `[deploy]` Android builds need NO Apple account — EAS auto-generates the keystore in the cloud on first build; `preview` profile → installable APK. Prove the pipeline on Android while the Apple account activates.
+- `[deploy]` `EXPO_PUBLIC_*` env vars → EAS env vars (`eas env:create --environment <preview|production> ...`), and bind each build profile with `"environment": "<name>"` in eas.json. Never commit them (even publishable keys) for a public repo.
+- `[deploy]` Apple Developer: a personal app must NOT ship under an employer's org — seller name, app ownership, revenue payouts, and IP attach to the team you build under. One Apple ID can be on multiple teams → always pick the right team in EAS + the App Store Connect switcher. Enroll **Individual** for personal apps (~US$99/yr, shown in local currency).
+- `[deploy]` Hands-off iOS builds: an App Store Connect API key (`.p8` + Key ID + Issuer ID, Admin role, generated under the RIGHT team) lets EAS build+submit without Apple password/2FA prompts.
+- `[deploy]` Set up `expo-updates` + `eas update:configure` early → ship JS-only fixes without rebuild/resubmit. The "channel" warning on first build just means expo-updates isn't installed yet.
+
 ## Workflow / product
 - `[workflow]` After a `supabase db reset`, the app's cached auth session is stale (refresh token wiped) → app signs out on next launch. Re-seed + re-sign-in to test authed screens.
 - `[workflow]` osascript keystroke injection and sim taps aren't reliably scriptable here — rely on render-level tests + screenshots of states reachable without typing.
