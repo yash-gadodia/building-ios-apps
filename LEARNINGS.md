@@ -15,6 +15,7 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[rn]` A `linear-gradient(...)` string is not a valid RN color/background → use expo-linear-gradient. Gradient text → MaskedView. Blur → expo-blur.
 - `[rn]` Absolute overlay headers/toasts need an opaque or blurred backdrop, else scrolled content bleeds through (transparent `TopBar` overlap bug → frosted blur fix).
 - `[rn]` A slow/odd animation can be a per-leg-vs-full-cycle semantics bug, not a per-screen tweak — check the timing math before tweaking call sites.
+- `[rn]` In a **size-parameterized atom** (logo/wordmark/badge), `letterSpacing` and internal gaps must be **em-relative** (`size * factor`), never hardcoded px — a value tuned at one size is wrong at another (the wordmark's `letterSpacing: 0.25` was right at 25px, wrong at the 64px logo → `size * 0.01`). For a clean multi-glyph mark, the gap *between* repeated elements must equal the gap to neighbors, and `marginBottom ≈ size*0.22` lands a `flex-end` element on the text baseline.
 
 ## Supabase / backend
 - `[supabase]` RLS reveal gate must be proven by a pgTAP test that switches to the `authenticated` role + sets `request.jwt.claims` and asserts **real row counts** (0 for non-member/pre-reveal). Policy-existence checks run as owner and prove nothing.
