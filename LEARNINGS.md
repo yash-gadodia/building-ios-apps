@@ -25,12 +25,20 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[supabase]` `supabase db reset` applying the whole migration chain from scratch is the prod dry-run; pair with `supabase test db`. Local Supabase on colima: `supabase start -x vector,analytics --ignore-health-check`.
 - `[supabase]` supabase-js typed `.rpc()`/`.update()` can infer `never` — use one documented `// @ts-expect-error`, never `as any`.
 
+- `[supabase]` Changing a function's `returns table (...)` shape errors on `create or replace` — `drop function if exists` first (and re-grant after).
+- `[supabase]` If a reveal/score is server-stored with adjustments (e.g. a late-round haircut), every OTHER surface that recomputes from raw rows silently contradicts it — make stored-value-wins (`coalesce(stored, recomputed)`) the rule in each aggregate/history function.
+
 ## Testing
 - `[testing]` RNTL v14: `fireEvent` self-wraps in `act()` — calling it INSIDE another `act()` yields "overlapping act() calls" warnings; for controlled inputs drive `element.props.onChangeText(...)` directly inside ONE act. Screens starting Animated loops on mount → `jest.useFakeTimers()` (or mock `Animated.timing`) to keep output act-clean.
 - `[testing]` `expect(<Component/>).toBeTruthy()` tests nothing (JSX is always truthy). Require `render()` + a real assertion. Reject hollow tests in review.
 - `[testing]` Put all native-module mocks in one `jest-setup.ts`; a screen importing a new native module just needs its mock added there — never disable the test.
 - `[testing]` Run the suite both parallel and `--runInBand` — a single leaked `setTimeout` presents as flake only one way.
 - `[testing]` `getByText` with a regex can match multiple nodes when an atom renders its label in more than one layer → use `getAllByText(...).length`.
+
+- `[testing]` RNTL v14: `fireEvent.press` that must RE-RENDER the tree (toggling local state) needs `await act(async () => { fireEvent.press(...) })` — presses that only assert a mock was CALLED pass without it, which hides the bug until the first state-toggle test.
+- `[testing]` pgTAP: a row-tuple comparison containing a NULL yields NULL (test fails with "have: NULL") — assert nullable columns with explicit `is null` AND-chains, never `(a,b,c) = (x,null,z)`.
+- `[testing]` pgTAP/psql: a VOLATILE function's inserts are invisible to the SAME statement's snapshot — call the function in one statement, assert its effects in the next (and never put a volatile fn call inside a WHERE, it re-executes per row).
+- `[testing]` Cross-role fixtures under RLS: stash values as superuser in a `create temp table` + `grant select ... to authenticated` — works under pg_prove where psql `\gset` may not.
 
 ## Native / build
 - `[native]` WidgetKit with no local Xcode: `@bacons/apple-targets` (config plugin + Swift target under `targets/`) compiles only on EAS — validate locally with `npx expo config --type prebuild` (do NOT run prebuild in a repo with no tracked `ios/`); the same package's `ExtensionStorage` is a zero-extra-dep App Group data bridge (lazy-require it so jest/Expo Go no-op).
@@ -58,3 +66,5 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[workflow]` After a `supabase db reset`, the app's cached auth session is stale (refresh token wiped) → app signs out on next launch. Re-seed + re-sign-in to test authed screens.
 - `[workflow]` osascript keystroke injection and sim taps aren't reliably scriptable here — rely on render-level tests + screenshots of states reachable without typing.
 - `[product]` Don't gate the whole app behind a two-sided precondition (e.g. partner pairing). Let users in at peak intent and gate only the part that truly needs the second party; hold the server-side reveal instead. (Solo answer-ahead.)
+- `[workflow]` Two interactive Claude sessions on ONE checkout corrupt each other — the second session should build in a `git worktree` (APFS `cp -c` the node_modules for an instant install) and rebase onto main when the first goes idle.
+- `[workflow]` When background agents share a worktree, commit with EXPLICIT file paths per lane — a `git add -A` sweeps other agents' half-done work into your commit.
