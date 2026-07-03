@@ -1,6 +1,6 @@
 # Cross-project iOS learnings
 
-Running log of non-obvious lessons, newest first. One line each, tagged. When a session teaches something a future app would otherwise re-pay for, add it here (and fold rules into `templates/rules/*` if always-applicable). Tags: `[setup] [rn] [supabase] [testing] [native] [workflow] [product]`.
+Running log of non-obvious lessons, newest first. One line each, tagged. When a session teaches something a future app would otherwise re-pay for, add it here (and fold rules into `templates/rules/*` if always-applicable; the ordered end-to-end launch guide is `PLAYBOOK.md`). Tags: `[setup] [rn] [supabase] [testing] [native] [workflow] [product]`.
 
 Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 
@@ -42,6 +42,10 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 
 - `[supabase]` `supabase/functions` is tsconfig-excluded and has no Deno check locally — a ReferenceError in an edge fn is invisible to every local gate; re-read edge-fn diffs by hand, and smoke-invoke after deploy.
 - `[supabase]` Two sessions numbering migrations independently WILL collide on the version prefix (`schema_migrations_pkey`); reserve numbers explicitly across parallel workstreams, and remember dashboard-created cron jobs can duplicate migration-created ones (double-running a freeze-spending reset = user-visible harm).
+- `[supabase]` A prod project's **region is permanent** — pick it at creation or recreate the whole project (cheap only while empty). The direct DB host (`db.<ref>.supabase.co`) is IPv6-only; push migrations through the **Session pooler** (IPv4, port 5432 — the 6543 transaction pooler is not for DDL).
+- `[supabase]` Set ONE hosted auth provider via the Management API (`PATCH /v1/projects/<ref>/config/auth` with only the fields you name) — `supabase config push` uploads your whole local `[auth]` block (localhost site_url, redirects) and clobbers prod. Native Sign-in-with-Apple: `client_id` = bundle ID, secret stays null.
+- `[supabase]` A deployed edge function's injected `SUPABASE_SERVICE_ROLE_KEY` is the NEW `sb_secret_…` "default secret", NOT the legacy JWT `service_role` — any in-fn bearer gate must be called with the `sb_secret_…` value, or the cron gets 401s that look like a code bug. Keep the scheduler's copy in Supabase Vault and rotate there.
+- `[supabase]` Scheduling edge fns from pg_cron needs pg_net + the service-role bearer IN the database — Vault only (never a migration, public repo); and never point pg_cron directly at a claim-ledger SQL function (it claims the day's send with no sender attached, burning it).
 - `[testing]` Never hardcode "N days ago" dates in fixtures for window-gated features (repairs, expiries) — they pass today and rot; compute from Date.now().
 - `[workflow]` Claim-before-send (at-most-once) push ledgers burn the day's notification on any later failure — claim each kind immediately before ITS OWN send, chunk to the provider's batch cap, and check per-ticket responses; silence is indistinguishable from success.
 
@@ -65,6 +69,18 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[deploy]` Hands-off iOS builds: an App Store Connect API key (`.p8` + Key ID + Issuer ID, Admin role, generated under the RIGHT team) lets EAS build+submit without Apple password/2FA prompts.
 - `[deploy]` Set up `expo-updates` + `eas update:configure` early → ship JS-only fixes without rebuild/resubmit. The "channel" warning on first build just means expo-updates isn't installed yet.
 
+- `[deploy]` Mint ASC API JWTs yourself: ES256, `kid` header = Key ID, `iss` = Issuer ID, `aud: appstoreconnect-v1`, `exp` ≤ 20 min — and the signature must be raw `r‖s`, which `openssl dgst` won't emit (it's DER); use the ~20-line python/`cryptography` recipe in `PLAYBOOK.md` §4. Blind spot: agreements/contracts have NO endpoint (`/v1/agreements` 404s at every role) — eyeball ASC → Business in the browser.
+- `[deploy]` Paid Apps Agreement chain: accept → banking + tax forms (non-US: W-8BEN + Certificate of Foreign Status + country questionnaire) → "Processing" → Active. Auto-renewable subs sit at MISSING_METADATA until Active; **one-time IAPs don't need it** and flip READY_TO_SUBMIT on metadata alone — that asymmetry is diagnostic. Apply for the Small Business Program (15%) immediately after accepting.
+- `[deploy]` Every IAP needs a review screenshot (min 640×920, a real shot of the purchase surface) before it leaves MISSING_METADATA — uploadable headlessly via the ASC API (reserve → upload → commit; verify `assetDeliveryState: COMPLETE`).
+- `[deploy]` Your FIRST auto-renewable subscription must be submitted **together with an app version** — submit v1.0 without the subs attached and they wait for a 1.0.1. If the agreement is nearly Active, hold and ship everything in one shot.
+- `[deploy]` APNs: one `.p8` key = Sandbox+Production **by design** (TestFlight/App Store use the Production env); EAS-created push keys are dual-env — verify at expo.dev → credentials instead of chasing "sandbox-only" ghosts from stale notes. FCM is a separate, Android-only step.
+- `[deploy]` Sign in with Apple (native) needs an **App ID**, not a Services ID (that's the web OAuth flow) — and Apple identifiers are globally unique ACROSS types, so a stray Services ID on the bundle string blocks creating the App ID.
+- `[deploy]` Host privacy/terms free on GitHub Pages (`main:/docs` + `.nojekyll`, or gh-pages). Rapid successive pushes can wedge a Pages build — `gh api -X POST repos/<o>/<r>/pages/builds` re-requests it; poll `…/pages/builds/latest` until `built`, then curl the live URL with a cache-buster.
+- `[deploy]` `ITSAppUsesNonExemptEncryption: false` in `app.json` → `ios.infoPlist` skips the export-compliance questionnaire on every submission (correct for HTTPS-only apps).
+- `[deploy]` Run `npx expo-doctor` and fix locally BEFORE (re)kicking a cloud build — generic failures (`EAS_BUILD_UNKNOWN_GRADLE_ERROR`, a missing `expo-constants` peer) trace to things doctor flags, and errored builds burn quota.
+- `[deploy]` Cutting a production build while the working tree holds concurrent agents' WIP → build from a **clean clone** at the pushed commit, never the live checkout.
+- `[deploy]` Review prep for a two-sided app: seed a **pre-paired demo couple with real history** on prod (creds in App Review → Sign-In Required + your KEYS.md), wire real SMTP (Supabase's default sender is rate-limited — reviewers can't even register), and remember Sign-in-with-Apple **parity** (offering Google requires offering Apple, 4.8).
+
 ## Workflow / product
 - `[workflow]` Fan-out agents on one repo need DISJOINT file ownership lists (including migration numbers); two agents running `supabase db reset` concurrently collide — tell each to wait+retry once on weird db failures.
 - `[workflow]` Cloud provider dashboards hide config the API can't read back (RevenueCat public keys, ASC vendor number) — record every dashboard-only value in a gitignored `KEYS.md` index the moment it's seen, or the next session re-derives it by hand.
@@ -73,3 +89,5 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[product]` Don't gate the whole app behind a two-sided precondition (e.g. partner pairing). Let users in at peak intent and gate only the part that truly needs the second party; hold the server-side reveal instead. (Solo answer-ahead.)
 - `[workflow]` Two interactive Claude sessions on ONE checkout corrupt each other — the second session should build in a `git worktree` (APFS `cp -c` the node_modules for an instant install) and rebase onto main when the first goes idle.
 - `[workflow]` When background agents share a worktree, commit with EXPLICIT file paths per lane — a `git add -A` sweeps other agents' half-done work into your commit.
+- `[workflow]` Stale-bundle trap: bare `xcrun simctl launch` of a dev client boots a **cached JS bundle** (old code despite healthy Metro) — launch via `xcrun simctl openurl booted "<bundleId>://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"` to force a fresh bundle.
+- `[workflow]` Headless sim sign-in without typing: mint a session via `POST /auth/v1/token?grant_type=password` and write the JSON over the app's AsyncStorage value file with the app terminated — supabase-js restores it on next launch (UI keystroke injection is unreliable for RN).

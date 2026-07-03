@@ -2,7 +2,8 @@
 
 A Claude Code **skill + starter kit** for building a series of iOS apps (Expo + React Native + Supabase), so each app is easier than the last. Lives in `~/.claude/skills/` → auto-available in every project.
 
-- **`SKILL.md`** — the playbook the agent loads when building/scaffolding an iOS app: setup, RN fidelity traps, the Supabase RLS security model, testing discipline, native-module rebuilds, the sim dev loop, go-live, and a scaffold procedure.
+- **`PLAYBOOK.md`** — **the end-to-end launch guide**: project setup → Supabase prod → secrets discipline → Apple/ASC (incl. the API-key JWT recipe) → push → EAS → IAP/RevenueCat → legal/compliance → review prep → multi-agent hygiene. Ordered as a real launch; start here when shipping.
+- **`SKILL.md`** — the build-phase playbook the agent loads when building/scaffolding an iOS app: setup, RN fidelity traps, the Supabase RLS security model, testing discipline, native-module rebuilds, the sim dev loop, go-live, and a scaffold procedure.
 - **`LEARNINGS.md`** — the compounding cross-project log. Append a line whenever a session teaches something non-obvious.
 - **`templates/`** — drop-in baseline: `CLAUDE.md`, `.claude/rules/*`, `jest-setup.ts`, an RLS reveal-gate migration, `DEV_SETUP.md`, `GO_LIVE.md`.
 
