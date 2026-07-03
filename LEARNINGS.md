@@ -40,6 +40,11 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[testing]` pgTAP/psql: a VOLATILE function's inserts are invisible to the SAME statement's snapshot — call the function in one statement, assert its effects in the next (and never put a volatile fn call inside a WHERE, it re-executes per row).
 - `[testing]` Cross-role fixtures under RLS: stash values as superuser in a `create temp table` + `grant select ... to authenticated` — works under pg_prove where psql `\gset` may not.
 
+- `[supabase]` `supabase/functions` is tsconfig-excluded and has no Deno check locally — a ReferenceError in an edge fn is invisible to every local gate; re-read edge-fn diffs by hand, and smoke-invoke after deploy.
+- `[supabase]` Two sessions numbering migrations independently WILL collide on the version prefix (`schema_migrations_pkey`); reserve numbers explicitly across parallel workstreams, and remember dashboard-created cron jobs can duplicate migration-created ones (double-running a freeze-spending reset = user-visible harm).
+- `[testing]` Never hardcode "N days ago" dates in fixtures for window-gated features (repairs, expiries) — they pass today and rot; compute from Date.now().
+- `[workflow]` Claim-before-send (at-most-once) push ledgers burn the day's notification on any later failure — claim each kind immediately before ITS OWN send, chunk to the provider's batch cap, and check per-ticket responses; silence is indistinguishable from success.
+
 ## Native / build
 - `[native]` WidgetKit with no local Xcode: `@bacons/apple-targets` (config plugin + Swift target under `targets/`) compiles only on EAS — validate locally with `npx expo config --type prebuild` (do NOT run prebuild in a repo with no tracked `ios/`); the same package's `ExtensionStorage` is a zero-extra-dep App Group data bridge (lazy-require it so jest/Expo Go no-op).
 - `[native]` Adding a native-module dep → the installed dev-client binary is stale → red screen `Cannot find native module 'X'` at the top-level import. Fix is `npx expo run:ios` (pods + rebuild), NOT a Metro `--clear`.
