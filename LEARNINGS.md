@@ -95,6 +95,8 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[workflow]` ASC's Ember UI ignores extension-level form fills on `<select>`s — set `select.value` then dispatch `input` + `change` events via page JS, and re-read the value to confirm before proceeding.
 - `[workflow]` ASC web login can return a transient `authResult=FAILED` even with a live session — navigate to `/apps` and retry once before concluding the browser context is logged out.
 - `[workflow]` `expo start --ios` on a fresh simulator fetches the **latest Expo Go**, which can crash an SDK-pinned project at the gesture-handler import (`undefined is not a function`, LogBox on launch) with zero code changes — it's an env mismatch, not your diff (prove via `git stash` + reload). Verify visuals with `npx expo run:ios` (native build) instead.
+- `[workflow]` ASC dashboard clicks can silently no-op (Resubmit clicked mid-scroll left state unchanged; the age-rating wizard's Save bounced back to an earlier step once). After every state-changing click, verify via the API — `reviewSubmissions.state`, `appInfos.appStoreAgeRating` — never the page render alone.
+- `[deploy]` The 2026 age-rating wizard can flash "Calculated Rating: 13+" mid-flow, but with every answer NONE/No it persists as **4+ globally** (Brazil AL / Korea ALL / Vietnam 00+ equivalents). Safe to complete + Save while the submission sits at WAITING_FOR_REVIEW.
 
 ## Workflow / product
 - `[workflow]` Fan-out agents on one repo need DISJOINT file ownership lists (including migration numbers); two agents running `supabase db reset` concurrently collide — tell each to wait+retry once on weird db failures.
