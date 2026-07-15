@@ -237,6 +237,7 @@ Order matters:
 - **Attach the IAPs to the app version** before submitting (and remember ch. 7: the first subs must ride with a version).
 - Pre-answer the classics: account deletion built, privacy URL live, labels accurate, demo account provided, IAP through StoreKit only, **Sign in with Apple parity** (offering Google sign-in requires offering Apple's too — 4.8), app passes the verification bar.
 - Sequence: TestFlight (internal testers install ~5–15 min after processing) → soak → App Store review.
+- **Post-approval: set App Availability or you're not live.** Approval and distribution are independent gates — an approved app with availability unconfigured shows as **"Removed from App Store"** (looks like a takedown; it isn't). Pricing and Availability → Set Up Availability → All Countries or Regions, ideally the day the app record is created. Then verify on a real device: store listing, download, and one real purchase end-to-end.
 
 ## 10. Multi-agent / two-session hygiene
 
