@@ -137,6 +137,12 @@ Seed source: **Parallax** (Expo + RN + Supabase couples app, 2026).
 - `[workflow]` **Agent worktrees inherit the CURRENT shell directory's repo.** Spawning an isolated worktree agent while the shell sat in the skill folder gave it a worktree of the skill repo, not the app; it correctly refused to work. `cd` back to the app repo before every worktree spawn, and put the expected base sha + app name in the brief so the agent verifies it.
 - `[workflow]` **Fake progress and fake checks erode trust fast:** a decorative red "bar path" squiggle drawn over the wrong spot of a processing illustration was called out immediately. Decorative motion must be geometrically anchored to the art (compute anchor points from the image), or not shown.
 
+## Many agents in parallel (Catchline, 2026-10-15)
+- `[workflow]` **Design guards with a per-file baseline earn their keep at merge time.** With ~10 agents editing screens at once, every branch that predated the guards tripped them on merge (raw fontSize, radius without borderCurve, hex colours); swapping in tokens at merge took minutes and kept the app from drifting. Ratchet counts down, never up; `// design-ok: <reason>` for real exceptions (e.g. pixel specs for a video overlay).
+- `[testing]` **Jest timeouts under machine load are not failures.** At load ~136 (two agents compiling native builds) screen suites timed out; the same suites passed 38/38 with `--runInBand` once load dropped. Re-run in band before chasing a "regression".
+- `[workflow]` **Anything committed to a public repo is published, including fixtures.** A demo clip of a non-consenting person went into public git history for a few hours before being replaced; removing it needs a history rewrite. For any bundled media, check consent and bystanders BEFORE the first commit, not before release.
+- `[product]` **Unvalidated numbers stay hidden behind a flag.** A computed bar speed read ~50% high on reference clips; ship the computation, hide the display until checked against a sensor.
+
 ## Store art
 - `[product]` **Lifter cutouts for store/app art:** macOS Vision `VNGeneratePersonSegmentationRequest` (a 25-line Swift CLI) gives a full-size person mask; keep the largest connected blob (scipy `ndimage.label`) to drop bystanders. Low-res source frames (600 px) look soft; use 4K source. Never let a figure be cropped by the canvas edge in a store screenshot; it reads as a mistake. Real people need consent, so solid silhouettes are the safe default.
 
