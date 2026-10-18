@@ -177,3 +177,8 @@ Five bugs that code review could not have caught, all found by calling the deplo
 - **Type the flag `: boolean`.** `export const ONE_SIDE = true` infers the literal type `true`, and `jest.replaceProperty(..., false)` then fails to typecheck.
 - A child that owns its own input state cannot be reset by the parent clearing parent state — **bump a `key` on the child** to remount it. A test asserting "the box is empty after save" caught this; the feature looked fine by inspection.
 - Version-locked App Store metadata (name, subtitle, description, keywords, screenshots) all ride the same submission — only **promotional text** (170 chars) can change on a live listing without a binary. Useful to soft-announce a pivot while the build is still in TestFlight.
+
+## Swap the build in review, fully by API (18 Oct 2026, Catchline)
+- `PATCH reviewSubmissions/{id} {canceled:true}` → state CANCELING, then COMPLETE within ~15 s; the version goes to DEVELOPER_REJECTED.
+- `PATCH appStoreVersions/{id}/relationships/build` with the new build, `POST reviewSubmissions` (platform IOS + app), `POST reviewSubmissionItems` (submission + appStoreVersion), then `PATCH {submitted:true}` → WAITING_FOR_REVIEW.
+- Do this whenever a crash fix lands while a build is waiting: a reviewer crash means a rejection anyway. The expedite form (developer.apple.com/contact/app-store/?topic=expedite) needs an Apple sign-in, so the human files it.
