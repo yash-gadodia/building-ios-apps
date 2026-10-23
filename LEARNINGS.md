@@ -199,3 +199,5 @@ Five bugs that code review could not have caught, all found by calling the deplo
 - `[workflow]` **Screenshot agents on a shared checkout get stale JS:** the sim app loads JS live from Metro, so switching branches in that folder mid-capture changes the screens. Give capture agents their own worktree.
 - `[product]` **Store screenshots: give the framing rules up front** (whole phone with margins, subject head-to-feet, no sliced rows, sharp frames only, no bystanders, three different moments of the lift) and use the real app on a real clip, not demo fixtures. A clip the app can't cue (filmed off-angle) can't produce the "one cue" hero shot.
 - `[product]` **Store copy: lead with the job, not the differentiator.** The subtitle is indexed for search (users search "snatch form", nobody searches "private"); put privacy/offline in slide 2 and the second sentence.
+
+- ASC: promotionalText on a READY_FOR_SALE version cannot be PATCHed via the API (404 "path does not match a defined resource type"); use the web version page, Promotional Text > Edit dialog > Save. It goes live without review; verify with GET appStoreVersionLocalizations.
